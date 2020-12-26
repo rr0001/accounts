@@ -40,7 +40,7 @@ if __name__ == "__main__":
         row_start = 3
         row_end = 54
 
-        year = ws.cell(row=1, column=20).value
+        year = ws.cell(row=1, column=24).value
         month = ws.cell(row=1, column=23).value
         month_end = ws.cell(row=1, column=22).value
 
