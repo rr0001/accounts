@@ -40,14 +40,14 @@ if __name__ == "__main__":
         row_start = 3
         row_end = 54
 
-        year = 2020
-        month = ws_name
-        month_end = ws_name + "-" + str(year)
+        year = ws.cell(row=1, column=20).value
+        month = ws.cell(row=1, column=23).value
+        month_end = ws.cell(row=1, column=22).value
 
         # get totals
-        re_anterior = ""  # recibido saldo anterior
-        cp_anterior = ""  # cuenta principal saldo anterior
-        oo_anterior = ""  # "otra" saldo anterior
+        re_anterior = ws.cell(row=2, column=21).value  # recibido saldo anterior
+        cp_anterior = ws.cell(row=3, column=21).value  # cuenta principal saldo anterior
+        oo_anterior = ws.cell(row=4, column=21).value  # "otra" saldo anterior
 
         re_ent_total = ws.cell(row=55, column=5).value
         re_sal_total = ws.cell(row=55, column=8).value
