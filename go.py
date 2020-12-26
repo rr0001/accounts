@@ -18,11 +18,13 @@ if __name__ == "__main__":
     locale.setlocale(locale.LC_ALL, os.getenv('locale', 'en'))
     in_folder = os.getenv("source_folder")
     out_folder = os.getenv("out_folder")
-    pdf_file_name = "S-26-S.pdf"
+    pdf_file = os.getenv("pdf")
+    pdf_file_name = pdf_file
 
     infile = f"{in_folder}/{pdf_file_name}"
 
-    xlsx_file_name = f"{in_folder}/S-26-S.xlsx"
+    xlsx_file = os.getenv("xlsx")
+    xlsx_file_name = f"{in_folder}/{xlsx_file}"
 
     # suppress the user warnings when opening the xlsx file
     with warnings.catch_warnings():
@@ -35,28 +37,29 @@ if __name__ == "__main__":
 
         ws = wb[ws_name]
 
-        # tbl_ref = ws.tables['Table2'].ref
+        tbl_ref = ws.tables['Table1'].ref
         # tbl_data = ws[tbl_ref]
-        row_start = 3
-        row_end = 54
 
-        year = ws.cell(row=1, column=24).value
-        month = ws.cell(row=1, column=23).value
-        month_end = ws.cell(row=1, column=22).value
+        row_start = 2
+        row_end = int(tbl_ref.split(":")[1][1:])
+
+        year = ws.cell(row=8, column=18).value
+        month = ws.cell(row=7, column=18).value
+        month_end = ws.cell(row=6, column=18).value
 
         # get totals
-        re_anterior = ws.cell(row=2, column=21).value  # recibido saldo anterior
-        cp_anterior = ws.cell(row=3, column=21).value  # cuenta principal saldo anterior
-        oo_anterior = ws.cell(row=4, column=21).value  # "otra" saldo anterior
+        re_anterior = ws.cell(row=2, column=18).value  # recibido saldo anterior
+        cp_anterior = ws.cell(row=3, column=18).value  # cuenta principal saldo anterior
+        oo_anterior = ws.cell(row=4, column=18).value  # "otra" saldo anterior
 
-        re_ent_total = ws.cell(row=55, column=5).value
-        re_sal_total = ws.cell(row=55, column=8).value
+        re_ent_total = ws.cell(row=row_end, column=4).value
+        re_sal_total = ws.cell(row=row_end, column=5).value
         re_sal_final = float(re_anterior or 0) + float(re_ent_total or 0) - float(re_sal_total or 0)
-        cp_ent_total = ws.cell(row=55, column=10).value
-        cp_sal_total = ws.cell(row=55, column=12).value
+        cp_ent_total = ws.cell(row=row_end, column=6).value
+        cp_sal_total = ws.cell(row=row_end, column=7).value
         cp_sal_final = float(cp_anterior or 0) + float(cp_ent_total or 0) - float(cp_sal_total or 0)
-        oo_ent_total = ws.cell(row=55, column=14).value
-        oo_sal_total = ws.cell(row=55, column=16).value
+        oo_ent_total = ws.cell(row=row_end, column=8).value
+        oo_sal_total = ws.cell(row=row_end, column=9).value
         oo_sal_final = float(oo_anterior or 0) + float(oo_ent_total or 0) - float(oo_sal_total or 0)
 
         total = re_sal_final + cp_sal_final + oo_sal_final
@@ -112,13 +115,13 @@ if __name__ == "__main__":
         cols = [
             {"name": "fecha", "field": "900_7_Text_C", "col_num": 1, "text": True},
             {"name": "descr", "field": "900_59_Text", "col_num": 2, "text": True},
-            {"name": "ct", "field": "900_111_Text_C", "col_num": 4, "text": True},
-            {"name": "r_ent", "field": "901_1_S26Value", "col_num": 5, "text": False},
-            {"name": "r_sal", "field": "901_54_S26Value", "col_num": 8, "text": False},
-            {"name": "cp_ent", "field": "902_1_S26Value", "col_num": 10, "text": False},
-            {"name": "cp_sal", "field": "902_54_S26Value", "col_num": 12, "text": False},
-            {"name": "o_ent", "field": "903_1_S26Value", "col_num": 14, "text": False},
-            {"name": "o_sal", "field": "903_54_S26Value", "col_num": 16, "text": False},
+            {"name": "ct", "field": "900_111_Text_C", "col_num": 3, "text": True},
+            {"name": "r_ent", "field": "901_1_S26Value", "col_num": 4, "text": False},
+            {"name": "r_sal", "field": "901_54_S26Value", "col_num": 5, "text": False},
+            {"name": "cp_ent", "field": "902_1_S26Value", "col_num": 6, "text": False},
+            {"name": "cp_sal", "field": "902_54_S26Value", "col_num": 7, "text": False},
+            {"name": "o_ent", "field": "903_1_S26Value", "col_num": 8, "text": False},
+            {"name": "o_sal", "field": "903_54_S26Value", "col_num": 9, "text": False},
         ]
 
         # add the columns to the data_dict
@@ -128,11 +131,12 @@ if __name__ == "__main__":
             for n in range(row_start, row_end):
                 cell_data = ws.cell(row=n, column=col["col_num"])
                 if cell_data.value:
-                    data_dict[field] = (
-                        cell_data.value
-                        if col["text"]
-                        else locale.format_string("%.2f", cell_data.value)
-                    )  # col + "_" + str(n)
+                    if cell_data.value != ' ' and cell_data.value is not None:
+                        data_dict[field] = (
+                            cell_data.value
+                            if col["text"]
+                            else locale.format_string("%.2f", cell_data.value)
+                        )  # col + "_" + str(n)
                 del cell_data
                 field = re.sub(
                     r"_([^_][0-9]*)_",
