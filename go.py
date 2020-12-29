@@ -11,11 +11,17 @@ from openpyxl import load_workbook
 
 from accounts import update_form_values
 
+
+def f(number: float):
+    """Returns number formatted with thousands separator with 2 decimal points"""
+    return locale.format_string("%.2f", number, grouping=True) if number else ""
+
+
 if __name__ == "__main__":
 
     load_dotenv()
 
-    locale.setlocale(locale.LC_ALL, os.getenv('locale', 'en'))
+    locale.setlocale(locale.LC_ALL, os.getenv("locale", "en"))
     in_folder = os.getenv("source_folder")
     out_folder = os.getenv("out_folder")
     pdf_file = os.getenv("pdf")
@@ -30,15 +36,24 @@ if __name__ == "__main__":
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=UserWarning)
         wb = load_workbook(xlsx_file_name, data_only=True)
-    # ws = wb.active
+        # ws = wb.active
 
     for ws_name in wb.sheetnames:
-        outfile = f"{out_folder}/{ws_name}-{pdf_file_name}"
+        outfile = f"{out_folder}/{ws_name}_{pdf_file_name}"
 
         ws = wb[ws_name]
 
-        tbl_ref = ws.tables['Table1'].ref
+        tbl_ref = None
+        tables = list(ws.tables.keys())
+        for table in tables:
+            if ws[ws.tables[table].ref.split(":")[0]].value == "FECHA":
+                tbl_ref = ws.tables[table].ref
+
+        # tbl_ref = ws.tables["Table1"].ref
         # tbl_data = ws[tbl_ref]
+
+        if tbl_ref is None:
+            raise Exception("Unable to find the correct table with data.")
 
         row_start = 2
         row_end = int(tbl_ref.split(":")[1][1:])
@@ -54,39 +69,52 @@ if __name__ == "__main__":
 
         re_ent_total = ws.cell(row=row_end, column=4).value
         re_sal_total = ws.cell(row=row_end, column=5).value
-        re_sal_final = float(re_anterior or 0) + float(re_ent_total or 0) - float(re_sal_total or 0)
+        re_sal_final = (
+            float(re_anterior or 0)
+            + float(re_ent_total or 0)
+            - float(re_sal_total or 0)
+        )
         cp_ent_total = ws.cell(row=row_end, column=6).value
         cp_sal_total = ws.cell(row=row_end, column=7).value
-        cp_sal_final = float(cp_anterior or 0) + float(cp_ent_total or 0) - float(cp_sal_total or 0)
+        cp_sal_final = (
+            float(cp_anterior or 0)
+            + float(cp_ent_total or 0)
+            - float(cp_sal_total or 0)
+        )
+
         oo_ent_total = ws.cell(row=row_end, column=8).value
         oo_sal_total = ws.cell(row=row_end, column=9).value
-        oo_sal_final = float(oo_anterior or 0) + float(oo_ent_total or 0) - float(oo_sal_total or 0)
+        oo_sal_final = (
+            float(oo_anterior or 0)
+            + float(oo_ent_total or 0)
+            - float(oo_sal_total or 0)
+        )
 
         total = re_sal_final + cp_sal_final + oo_sal_final
 
         # format the totals in locale
-        re_ent_total_fmt = locale.format_string("%.2f", re_ent_total) if re_ent_total else ""
-        re_sal_total_fmt = locale.format_string("%.2f", re_sal_total) if re_sal_total else ""
-        cp_ent_total_fmt = locale.format_string("%.2f", cp_ent_total) if cp_ent_total else ""
-        cp_sal_total_fmt = locale.format_string("%.2f", cp_sal_total) if cp_sal_total else ""
-        oo_ent_total_fmt = locale.format_string("%.2f", oo_ent_total) if oo_ent_total else ""
-        oo_sal_total_fmt = locale.format_string("%.2f", oo_sal_total) if oo_sal_total else ""
+        re_ent_total_fmt = f(re_ent_total)
+        re_sal_total_fmt = f(re_sal_total)
+        cp_ent_total_fmt = f(cp_ent_total)
+        cp_sal_total_fmt = f(cp_sal_total)
+        oo_ent_total_fmt = f(oo_ent_total)
+        oo_sal_total_fmt = f(oo_sal_total)
 
-        re_anterior_fmt = locale.format_string("%.2f", re_anterior) if re_anterior else ""
-        cp_anterior_fmt = locale.format_string("%.2f", cp_anterior) if cp_anterior else ""
-        oo_anterior_fmt = locale.format_string("%.2f", oo_anterior) if oo_anterior else ""
+        re_anterior_fmt = f(re_anterior)
+        cp_anterior_fmt = f(cp_anterior)
+        oo_anterior_fmt = f(oo_anterior)
 
-        re_sal_final_fmt = locale.format_string("%.2f", re_sal_final) if re_sal_final else ""
-        cp_sal_final_fmt = locale.format_string("%.2f", cp_sal_final) if cp_sal_final else ""
-        oo_sal_final_fmt = locale.format_string("%.2f", oo_sal_final) if oo_sal_final else ""
+        re_sal_final_fmt = f(re_sal_final)
+        cp_sal_final_fmt = f(cp_sal_final)
+        oo_sal_final_fmt = f(oo_sal_final)
 
-        total_fmt = locale.format_string("%.2f", total) if total else ""
+        total_fmt = f(total)
 
         # prepare the data_dict with initial values
         data_dict = {
-            "900_1_Text_C": os.getenv('cong'),
-            "900_2_Text_C": os.getenv('city'),
-            "900_3_Text_C": os.getenv('state'),
+            "900_1_Text_C": os.getenv("cong"),
+            "900_2_Text_C": os.getenv("city"),
+            "900_3_Text_C": os.getenv("state"),
             "900_4_Text_C": month,
             "900_5_Text_C": year,
             "901_53_S26TotalValue": re_ent_total_fmt,
@@ -113,40 +141,35 @@ if __name__ == "__main__":
 
         # columns to add to the data_dict
         cols = [
-            {"name": "fecha", "field": "900_7_Text_C", "col_num": 1, "text": True},
-            {"name": "descr", "field": "900_59_Text", "col_num": 2, "text": True},
-            {"name": "ct", "field": "900_111_Text_C", "col_num": 3, "text": True},
-            {"name": "r_ent", "field": "901_1_S26Value", "col_num": 4, "text": False},
-            {"name": "r_sal", "field": "901_54_S26Value", "col_num": 5, "text": False},
-            {"name": "cp_ent", "field": "902_1_S26Value", "col_num": 6, "text": False},
-            {"name": "cp_sal", "field": "902_54_S26Value", "col_num": 7, "text": False},
-            {"name": "o_ent", "field": "903_1_S26Value", "col_num": 8, "text": False},
-            {"name": "o_sal", "field": "903_54_S26Value", "col_num": 9, "text": False},
+            {"name": "date", "field": "900_7_Text_C", "col_num": 1},
+            {"name": "descr", "field": "900_59_Text", "col_num": 2},
+            {"name": "tc", "field": "900_111_Text_C", "col_num": 3},
+            {"name": "in1", "field": "901_1_S26Value", "col_num": 4},
+            {"name": "out1", "field": "901_54_S26Value", "col_num": 5},
+            {"name": "in2", "field": "902_1_S26Value", "col_num": 6},
+            {"name": "out2", "field": "902_54_S26Value", "col_num": 7},
+            {"name": "in3", "field": "903_1_S26Value", "col_num": 8},
+            {"name": "out3", "field": "903_54_S26Value", "col_num": 9},
         ]
 
         # add the columns to the data_dict
         for col in cols:
-            cell_data = ws.cell(row=row_start, column=col["col_num"])
             field = col["field"]
             for n in range(row_start, row_end):
-                cell_data = ws.cell(row=n, column=col["col_num"])
-                if cell_data.value:
-                    if cell_data.value != ' ' and cell_data.value is not None:
-                        data_dict[field] = (
-                            cell_data.value
-                            if col["text"]
-                            else locale.format_string("%.2f", cell_data.value)
-                        )  # col + "_" + str(n)
-                del cell_data
+                cell_data = ws.cell(row=n, column=col["col_num"]).value
+                if cell_data:
+                    if type(cell_data) in [int, float]:
+                        data_dict[field] = f(cell_data)  # col + "_" + str(n)
+                    elif cell_data.strip() != "":
+                        data_dict[field] = cell_data
                 field = re.sub(
                     r"_([^_][0-9]*)_",
                     lambda x: f"_{str(int(x.group(1))+1).zfill(len(x.group(1)))}_",
                     field,
                 )
-        # pprint(data_dict)
+        final_dict = {k: v for k, v in data_dict.items() if v != ""}
         update_form_values(
             infile,
             outfile,
-            data_dict,
-            # {"my_fieldname_1": "My Value", "my_fieldname_2": "My Another value"},
+            final_dict,
         )
