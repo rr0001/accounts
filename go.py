@@ -43,20 +43,20 @@ if __name__ == "__main__":
 
         ws = wb[ws_name]
 
-        tbl_ref = None
-        tables = list(ws.tables.keys())
-        for table in tables:
+        table_ref = None
+        table_names = list(ws.tables.keys())
+        for table in table_names:
             if ws[ws.tables[table].ref.split(":")[0]].value == "FECHA":
-                tbl_ref = ws.tables[table].ref
+                table_ref = ws.tables[table].ref
 
-        # tbl_ref = ws.tables["Table1"].ref
-        # tbl_data = ws[tbl_ref]
+        # table_ref = ws.tables["Table1"].ref
+        # table = ws[table_ref]
 
-        if tbl_ref is None:
+        if table_ref is None:
             raise Exception("Unable to find the correct table with data.")
 
         row_start = 2
-        row_end = int(tbl_ref.split(":")[1][1:])
+        row_end = int(table_ref.split(":")[1][1:])
 
         year = ws.cell(row=8, column=18).value
         month = ws.cell(row=7, column=18).value
@@ -168,6 +168,7 @@ if __name__ == "__main__":
                     field,
                 )
         final_dict = {k: v for k, v in data_dict.items() if v != ""}
+        # pprint(final_dict)
         update_form_values(
             infile,
             outfile,
