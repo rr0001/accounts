@@ -110,6 +110,34 @@ if __name__ == "__main__":
 
         total_fmt = f(total)
 
+        # conciliation
+        col = 20
+        reconcile_date = ws.cell(row=28, column=col).value or month_end
+        row_1 = ws.cell(row=29, column=col).value
+        row_2 = ws.cell(row=30, column=col).value
+        row_3 = ws.cell(row=31, column=col).value
+        row_4 = ws.cell(row=32, column=col).value
+        # row_5_line_1 = ws.cell(row=32, column=col).value
+        # row_5_line_2 = ws.cell(row=33, column=col).value
+        # row_5_line_3 = ws.cell(row=34, column=col).value
+        # row_5_line_4 = ws.cell(row=35, column=col).value
+        # row_5_line_5 = ws.cell(row=36, column=col).value
+        # row_5_line_6 = ws.cell(row=37, column=col).value
+        # row_5_line_7 = ws.cell(row=38, column=col).value
+        row_6 = ws.cell(row=33, column=col).value
+        row_7 = ws.cell(row=34, column=col).value
+        row_8 = ws.cell(row=35, column=col).value
+        row_9 = ws.cell(row=36, column=col).value
+
+        row_1_fmt = f(row_1)
+        row_2_fmt = f(row_2)
+        row_3_fmt = f(row_3)
+        row_4_fmt = f(row_4)
+        row_6_fmt = f(row_6)
+        row_7_fmt = f(row_7)
+        row_8_fmt = f(row_8)
+        row_9_fmt = f(row_9)
+
         # prepare the data_dict with initial values
         data_dict = {
             "900_1_Text_C": os.getenv("cong"),
@@ -137,6 +165,15 @@ if __name__ == "__main__":
             "904_40_S26TotalAmount": oo_sal_total_fmt,  # oo_salida
             "904_41_S26TotalAmount": oo_sal_final_fmt,  # oo_salida
             "904_42_S26TotalAmount": total_fmt,
+            "904_1_Text_C": reconcile_date,
+            "904_2_S26Amount": row_1_fmt,
+            "904_3_S26Amount": row_2_fmt,
+            "904_4_S26Amount": row_3_fmt,
+            "904_5_S26TotalAmount": row_4_fmt,
+            "904_20_S26TotalAmount": row_6_fmt,
+            "904_21_S26Amount": row_7_fmt,
+            "904_22_S26Amount": row_8_fmt,
+            "904_23_S26TotalAmount": row_9_fmt,
         }
 
         # columns to add to the data_dict
